@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="imageBrowserApp">
+<head>
+    <meta charset="UTF-8">
+    <title>Image Browser</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #fafafa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .thumbnail {
+            width: 140px;
+            height: 140px;
+            cursor: pointer;
+            margin: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .thumbnail:hover {
+            transform: scale(1.05);
+        }
+
+        .thumbnail-container {
+            text-align: center;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .selected-image-container img {
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            max-width: 100%;
+            height: auto;
+        }
+
+        input[type="text"] {
+            margin: 20px 0;
+            padding: 10px;
+            width: calc(100% - 22px);
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: #333;
+        }
+    </style>
+</head>
+<body ng-controller="ImageController as imgCtrl">
+
+    <h1>Image Browser</h1>
+    <input type="text" ng-model="imgCtrl.filterText" placeholder="Filter images...">
+
+    <div class="thumbnail-container">
+        <img ng-repeat="image in imgCtrl.images | filter:imgCtrl.filterText" ng-src="{{image.thumbnail}}" class="thumbnail" ng-click="imgCtrl.selectImage(image.full)">
+    </div>
+
+    <div ng-show="imgCtrl.selectedImage" class="selected-image-container">
+        <h2>Selected Image</h2>
+        <img ng-src="{{imgCtrl.selectedImage}}" alt="Selected Image">
+    </div>
+
+    <script>
+        angular.module('imageBrowserApp', [])
+            .controller('ImageController', ['$scope', '$http', function($scope, $http) {
+                var vm = this;
+                vm.images = [];
+                vm.selectedImage = null;
+                vm.filterText = '';
+                var limit = 15;
+
+                $http.get('https://picsum.photos/v2/list?limit=' + limit)
+                    .then(function(response) {
+                        vm.images = response.data.map(function(item) {
+                            return {
+                                thumbnail: `https://picsum.photos/140/140?image=${item.id}`,
+                                full: `https://picsum.photos/${item.width}/${item.height}?image=${item.id}`
+                            };
+                        });
+                    });
+
+                vm.selectImage = function(imageUrl) {
+                    var imageIdMatch = imageUrl.match(/image=(\d+)/);
+                    if (imageIdMatch && imageIdMatch[1]) {
+                        var imageId = imageIdMatch[1];
+                        vm.selectedImage = `https://picsum.photos/500/?image=${imageId}`;
+                    } else {
+                        vm.selectedImage = imageUrl;
+                    }
+                };
+            }]);
+    </script>
+</body>
+</html>
